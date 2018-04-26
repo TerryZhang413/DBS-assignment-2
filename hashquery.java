@@ -14,19 +14,20 @@ public class hashquery {
 		long startTime=System.currentTimeMillis();
 		long endTime;
 		int tableSize=1000;
-		hashquery hashquery=new hashquery();
 		int pageSize=0;  //initial pagesize
+		int inputLength=args.length;
 		String queryKeyWord="";
 		String pageNo = null;
-		int inputLength=args.length;
-				
-		if(inputLength<2)
+		
+		hashquery hashquery=new hashquery();
+						
+		if(inputLength<2)  //invalid input 
 		{
 			System.err.println("invalid input: There should be a pagesize and a keyword!");
 			System.exit(0);
 		}	
 		
-		boolean sizeWord=true;
+		boolean sizeWord=true;  //if the page size is at first position
 		try
 		{
 			pageSize=Integer.valueOf(args[0]);
@@ -43,10 +44,10 @@ public class hashquery {
 		}
 		catch(Exception e)
 		{
-			sizeWord=false;
+			sizeWord=false;  //if not, try the other possibility
 		}
 		
-		if(!sizeWord)
+		if(!sizeWord)  //try if the page size is at the last position
 		{
 			try
 			{
@@ -64,7 +65,7 @@ public class hashquery {
 			}
 			catch(Exception e)
 			{
-				System.err.println("No pageSize found in input!");
+				System.err.println("No pageSize found in input!");  //if not, there is no page size in input. kill the program
 				System.exit(0);
 			}
 		}
@@ -76,15 +77,15 @@ public class hashquery {
 		
 		
 		
-		for(int i=hashIndex;i<tableSize;i++)
+		for(int i=hashIndex;i<tableSize;i++) //loop the hash index from the specific one 
 		{
 		pageNo=hashquery.getPageNo(pageSize, i, queryKeyWord); //get the pageNo from hash table
-		if(pageNo!=null)
+		if(pageNo!=null)  //if there is a page number return
 			break;
 		System.out.println("Hash table No:"+ i +" has been viewed and no found.");
 		}
 		
-		if(pageNo==null)
+		if(pageNo==null)  //after end or break of loop, check if there is a page number return
 		{
 			for(int i=0;i<hashIndex;i++)
 			{
@@ -94,13 +95,15 @@ public class hashquery {
 			System.out.println("Hash table No:"+ i +" has been viewed and no found.");
 			}
 		}
-		if(pageNo==null)
+		if(pageNo==null) //after end or break of loop, check if there is a page number return
 		{
 			System.out.println("The keyword is not found in hash index, please check and try again");
 			endTime=System.currentTimeMillis();
 			System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
 			System.exit(0);
 		}
+		
+		//if there is on page number return, find it in heap file
 		int pageNumber=Integer.parseInt(pageNo);
 		hashquery.printInfo(queryKeyWord, pageNumber, pageSize);
 
@@ -164,7 +167,7 @@ public class hashquery {
 		
 
 		if(judgement==false)
-		System.out.println("There is no record matched!");
+		System.out.println("There is no record matched!");  //error report
 		
 		return judgement;
 	}
