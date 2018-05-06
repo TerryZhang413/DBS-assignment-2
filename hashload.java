@@ -19,7 +19,8 @@ public class hashload {
 		int pageSize = 0;
 		byte[] pageContent;
 		int recordNumber;
-		int tableSize=1000;
+		int tableSize=1023;
+		int bucketSize=3500; // Amount of records*(1/0.7) /tableSize
 		//Hashtable<String, String> hashTable=new Hashtable<String,String>();
 		ArrayList<hashTable> hashTableList=new ArrayList<hashTable>();
 		
@@ -59,16 +60,25 @@ public class hashload {
 				{
 					recordNumber=hashload.getRecordNumber(pageContent); //get how many records in this page
 					
-					ArrayList<byte[]> recordList=hashload.getRecord(recordNumber, pageContent);  //push records in a arraylist
+					ArrayList<byte[]> recordList=hashload.getRecord(recordNumber, pageContent,pageSize);  //push records in a arraylist
 					for(int i=0;i<recordList.size();i++)
 					{
 						String BN_NAME=hashload.getBN_NAME(recordList.get(i));
 						int hashIndex=BN_NAME.hashCode();
 						//int hashIndex=hashload.hashCode(BN_NAME,tableSize);
-						System.out.println(BN_NAME+": "+pageCount);
+						//System.out.println(BN_NAME+": "+pageCount);
 						hashIndex=hashload.hashCodeRestrict(hashIndex, tableSize);
-						hashTableList.get(hashIndex).getHashTable().put(BN_NAME, ""+pageCount); //put the BN_NAME and pageNo in the specific hashtable
-						//hashTable.put(BN_NAME, ""+pageCount);
+						if(hashTableList.get(hashIndex).getHashTable().size()<bucketSize)
+							hashTableList.get(hashIndex).getHashTable().put(BN_NAME, ""+pageCount);
+						else
+						{
+							while(hashTableList.get(hashIndex).getHashTable().size()>=bucketSize) //if the bucket is full
+							{
+								hashIndex++; //store the data in next bucket
+								hashTableList.get(hashIndex).getHashTable().put(BN_NAME, ""+pageCount); //put the BN_NAME and pageNo in the specific hashtable
+							}
+							//hashTable.put(BN_NAME, ""+pageCount);
+						}
 					}
 					pageCount++;
 				}
@@ -95,6 +105,7 @@ public class hashload {
 				}finally {
 					out.flush();
 				}
+				System.out.println("Hash table "+i+" has been built!");
 			}
 			out.close();
 			endTime=System.currentTimeMillis();
@@ -146,7 +157,7 @@ public class hashload {
 	}
 	
 	//get records in a page
-	public ArrayList<byte[]> getRecord(int recordNumber,byte[] pageContent)
+	public ArrayList<byte[]> getRecord(int recordNumber,byte[] pageContent,int pageSize)
 	{
 		ArrayList<byte[]> recordList = new ArrayList<byte[]>();
 		
@@ -172,8 +183,8 @@ public class hashload {
 			recordList.add(record);
 		}
 		
-		byte[] record = new byte[4096-endRecordLocation];
-		System.arraycopy(pageContent,endRecordLocation,record,0,4096-endRecordLocation);   //get last record
+		byte[] record = new byte[pageSize-endRecordLocation];
+		System.arraycopy(pageContent,endRecordLocation,record,0,pageSize-endRecordLocation);   //get last record
 		recordList.add(record);
 		
 		return recordList;
