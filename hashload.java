@@ -15,7 +15,7 @@ public class hashload {
 		int recordNumber;
 		final int recordsAmount=2024631;
 		int tableSize=1024 -1;
-		double rate=0.99;
+		double rate=0.995;
 		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
 		//int bucketSize=2050; // Amount of records*(1/0.7) /tableSize
 		//Hashtable<String, String> hashTable=new Hashtable<String,String>();
