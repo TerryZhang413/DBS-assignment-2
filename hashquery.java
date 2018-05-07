@@ -17,8 +17,7 @@ public class hashquery {
 	public static void main(String[] args) throws ClassNotFoundException, IOException {
 		long startTime=System.currentTimeMillis();
 		long endTime;
-		int tableSize=1024 - 1;
-		int viewLimit=5;
+		int tableSize=1024 -1;
 		int pageSize=0;  //initial pagesize
 		int inputLength=args.length;
 		String queryKeyWord="";
@@ -93,15 +92,12 @@ public class hashquery {
 			System.out.println("Hash table No:"+ i +" has been viewed and find the BN_NAME.");
 			break;
 		}
-		System.out.println("Hash table No:"+ i +" has been viewed and no found.");
-			if((i-hashIndex+1)>=viewLimit)
-				{
-				recordNo=-2;
-				break;
-				}
-		}
 			
-		if(pageNo==-1 && recordNo==-1)  //after end or break of loop, check if there is a page number return
+		System.out.println("Hash table No:"+ i +" has been viewed and no found.");
+		}
+		
+		
+		if(pageNo==-1)  //after end or break of loop, check if there is a page number return
 		{
 			for(int i=0;i<hashIndex;i++)
 			{
@@ -112,13 +108,10 @@ public class hashquery {
 				break;
 			}
 			System.out.println("Hash table No:"+ i +" has been viewed and no found.");
-			if((i+tableSize-hashIndex+1)>=viewLimit)
-				break;
 			}
 		}
 		if(pageNo==-1) //after end or break of loop, check if there is a page number return
 		{
-			System.out.println(viewLimit+ " hash tables have been viewed.");
 			System.out.println("The keyword is not found in hash index, please check and try again");
 			endTime=System.currentTimeMillis();
 			System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
