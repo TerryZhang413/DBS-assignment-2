@@ -1,13 +1,7 @@
 package assignment2;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
-import java.util.Hashtable;
 
 public class hashload {
 	
@@ -19,21 +13,26 @@ public class hashload {
 		int pageSize = 0;
 		byte[] pageContent;
 		int recordNumber;
-		int tableSize=1023;
-		int bucketSize=3500; // Amount of records*(1/0.7) /tableSize
+		final int recordsAmount=2024631;
+		int tableSize=1024 -1;
+		double rate=0.99;
+		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
+		//int bucketSize=2050; // Amount of records*(1/0.7) /tableSize
 		//Hashtable<String, String> hashTable=new Hashtable<String,String>();
 		ArrayList<hashTable> hashTableList=new ArrayList<hashTable>();
 		
+		//creat hash table and add them to the list
 		for(int i=0;i<tableSize;i++)
 		{
-			hashTable hashTable=new hashTable(new Hashtable<String,String>());
+			hashTable hashTable=new hashTable(new ArrayList<hashIndex>());
 			hashTableList.add(hashTable);
 		}
 			
 		
 		String outputAddress = null;
 		FileOutputStream fos;
-		ObjectOutputStream out = null;
+		BufferedWriter out = null;
+		//ObjectOutputStream out = null;
 				
 		try
 			{
@@ -68,15 +67,24 @@ public class hashload {
 						//int hashIndex=hashload.hashCode(BN_NAME,tableSize);
 						//System.out.println(BN_NAME+": "+pageCount);
 						hashIndex=hashload.hashCodeRestrict(hashIndex, tableSize);
-						if(hashTableList.get(hashIndex).getHashTable().size()<bucketSize)
-							hashTableList.get(hashIndex).getHashTable().put(BN_NAME, ""+pageCount);
+						
+						int recordNo=i; //store the locaton of the record in the specific page
+						if(hashTableList.get(hashIndex).getHashIndexList().size()<bucketSize)
+							hashTableList.get(hashIndex).addRecord(BN_NAME, pageCount, recordNo);
 						else
 						{
-							while(hashTableList.get(hashIndex).getHashTable().size()>=bucketSize) //if the bucket is full
+							while(hashTableList.get(hashIndex).getHashIndexList().size()>=bucketSize) //if the bucket is full
 							{
-								hashIndex++; //store the data in next bucket
-								hashTableList.get(hashIndex).getHashTable().put(BN_NAME, ""+pageCount); //put the BN_NAME and pageNo in the specific hashtable
+								if(hashIndex!=tableSize-1)
+								{
+									hashIndex++; //store the data in next bucket
+								}
+								else
+								{
+									hashIndex=0; //printed to the first hash table
+								}
 							}
+							hashTableList.get(hashIndex).addRecord(BN_NAME, hashIndex, recordNo); //put the BN_NAME and pageNo in the specific hashtable
 							//hashTable.put(BN_NAME, ""+pageCount);
 						}
 					}
@@ -97,9 +105,21 @@ public class hashload {
 				int hashIndex=i;
 				File file=new File(outputAddress+"/hashtable"+hashIndex);
 				try {
-					fos=new FileOutputStream(file);
-					out=new ObjectOutputStream(fos);
-					out.writeObject(hashTableList.get(hashIndex).getHashTable());
+					//fos=new FileOutputStream(file);
+					out=new BufferedWriter(new FileWriter(file));
+					//out=new ObjectOutputStream(fos);
+					//out.writeObject(hashTableList.get(hashIndex).getHashIndexList());
+					for(int j=0;j<hashTableList.get(hashIndex).getHashIndexList().size();j++)
+					{
+						out.write(hashTableList.get(hashIndex).getHashIndexList().get(j).getBN_NAME());
+						//System.out.print(hashTableList.get(hashIndex).getHashIndexList().get(j).getBN_NAME());
+						out.write(","+hashTableList.get(hashIndex).getHashIndexList().get(j).getPageNo());
+						//System.out.print(hashTableList.get(hashIndex).getHashIndexList().get(j).getPageNo());
+						out.write(","+hashTableList.get(hashIndex).getHashIndexList().get(j).getRecordNo());
+						//System.out.print(hashTableList.get(hashIndex).getHashIndexList().get(j).getRecordNo()+"");
+						out.newLine();
+						//System.out.println();
+						}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}finally {

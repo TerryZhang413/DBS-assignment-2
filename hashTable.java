@@ -1,43 +1,31 @@
 package assignment2;
 
-import java.util.Hashtable;
+import java.util.ArrayList;
 
 public class hashTable {
 
-	private String hashIndex;
-	private String BN_NAME;
-	private Hashtable<String, String> hashTable=new Hashtable<String,String>();
+	private ArrayList<hashIndex> hashIndexList=new ArrayList<hashIndex>();
 	
-	
-	public hashTable(Hashtable<String, String> hashTable)
+	public hashTable(ArrayList<hashIndex> hashIndexList)
 	{
-		this.setHashTable(hashTable);
+		this.setHashIndexList(hashIndexList);
 	}
 
-	public String getHashIndex() {
-		return hashIndex;
+
+	public void addRecord(String BN_NAME,int pageNo,int recordNo)
+	{
+		hashIndex hashIndex=new hashIndex(BN_NAME,pageNo,recordNo);
+		hashIndexList.add(hashIndex);
 	}
 
-	public void setHashIndex(String hashIndex) {
-		this.hashIndex = hashIndex;
+	public ArrayList<hashIndex> getHashIndexList() {
+		return hashIndexList;
 	}
 
-	public String getBN_NAME() {
-		return BN_NAME;
+
+	public void setHashIndexList(ArrayList<hashIndex> hashIndexList) {
+		this.hashIndexList = hashIndexList;
 	}
 
-	public void setBN_NAME(String bN_NAME) {
-		BN_NAME = bN_NAME;
-	}
-
-	public Hashtable<String, String> getHashTable() {
-		return hashTable;
-	}
-
-	public void setHashTable(Hashtable<String, String> hashTable) {
-		this.hashTable = hashTable;
-	}
-	
-	
 }
 
