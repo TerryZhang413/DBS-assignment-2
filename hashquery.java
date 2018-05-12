@@ -20,14 +20,12 @@ public class hashquery {
 		int pageSize=0;  //initial pagesize
 		int inputLength=args.length;
 		String queryKeyWord="";
-		int pageNo = -1;
-		int recordNo= -1;
-		int judgement=-1;
+		ArrayList<hashIndex> pageRecordNo=new ArrayList<hashIndex>();
 		
 		
 		final int recordsAmount=2024631;
 		int tableSize=1024 -1;
-		double rate=0.995;
+		double rate=0.9;
 		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
 		
 		
@@ -87,74 +85,29 @@ public class hashquery {
 		hashIndex=hashquery.hashCodeRestrict(hashIndex, tableSize);  //get hash index by hashCode();
 		System.out.println("Hash index of the Keyword is:" + hashIndex);
 		
+		pageRecordNo=hashquery.getPageRecordNo(pageSize, hashIndex, queryKeyWord , bucketSize,tableSize);
 		
-		int pageRecordNo[]= {-1,-1,0}; //first is pageNo, seconde is recordNo, last is judging if the page is full
-		for(int i=hashIndex;i<tableSize;i++) //loop the hash index from the specific one 
+		if(pageRecordNo.size()!=0) //if there is on page number return, find it in heap file
 		{
-			pageRecordNo=hashquery.getPageRecordNo(pageSize, i, queryKeyWord,bucketSize); //get the pageNo from hash table
-			pageNo=pageRecordNo[0];
-			recordNo=pageRecordNo[1];
-			judgement=pageRecordNo[2];
-			
-			if(pageNo!=-1 && judgement==0)  //if there is a page number return and the page is not full
+			int pageNo=0;
+			int recordNo=0;
+			for(int i=0;i<pageRecordNo.size();i++)
 			{
-				System.out.println("Hash table No:"+ i +" has been viewed and find the BN_NAME.");
-				break;
+				pageNo=pageRecordNo.get(i).getPageNo();
+				recordNo=pageRecordNo.get(i).getRecordNo();
+				hashquery.printInfo(queryKeyWord, pageNo, recordNo, pageSize);
 			}
-			else if(pageNo==-1 && judgement==0) //if there is not such BN_NAME and the page has blank
-			{
-				System.out.println("Hash table No:"+ i +" has been viewed as not full and no found.");
-				break;
-			}
-			else if (pageNo==-1 && judgement!=0)
-			{
-				System.out.println("Hash table No:"+ i +" has been viewed as full and no found. Search next hash table!");
-				continue;
-			}
-		}
-		
-		
-		if(pageNo==-1 && judgement!=0)  //after end or break of loop, check if there is a page number return and the page is full or not
-		{
-			for(int i=0;i<hashIndex;i++)
-			{
-				pageRecordNo=hashquery.getPageRecordNo(pageSize, i, queryKeyWord,bucketSize); //get the pageNo from hash table
-				pageNo=pageRecordNo[0];
-				recordNo=pageRecordNo[1];
-				judgement=pageRecordNo[2];
-				if(pageNo!=-1 && judgement==0 )
-				{
-					System.out.println("Hash table No:"+ i +" has been viewed and find the BN_NAME.");
-					break;
-				}
-				else if(pageNo==-1 && judgement==0)
-				{
-					System.out.println("Hash table No:"+ i +" has been viewed as not full and no found.");
-					break;
-				}
-				else if(pageNo==-1 && judgement!=0)
-				{
-					System.out.println("Hash table No:"+ i +" has been viewed as full and no found. Search next hash table!");
-					continue;
-				}
-			}
-		}
-		if(pageNo==-1) //after end or break of loop, check if there is a page number return
+			endTime=System.currentTimeMillis();
+			System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
+		}					
+		else //after end or break of loop, check if there is a page number return
 		{
 			System.out.println("The keyword is not found in hash index, please check and try again");
 			endTime=System.currentTimeMillis();
 			System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
 			System.exit(0);
 		}
-		
-		//if there is on page number return, find it in heap file
-		hashquery.printInfo(queryKeyWord, pageNo, recordNo, pageSize);
 
-		
-			
-		//System.out.println(hashquery.getPageNo(pageSize, hashIndex, queryKeyWord)); //test the pageNumber is correct
-		endTime=System.currentTimeMillis();
-		System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
 	}
 
 	
@@ -168,32 +121,47 @@ public class hashquery {
 	
 	
 	@SuppressWarnings("unchecked")
-	public int[] getPageRecordNo(int pageSize,int hashIndex,String queryKeyWord, int bucketSize ) throws IOException, ClassNotFoundException
+	public ArrayList<hashIndex> getPageRecordNo(int pageSize,int hashIndex,String queryKeyWord, int bucketSize,int tableSize ) throws IOException, ClassNotFoundException
 	{
-		int pageRecordNo[]= {-1,-1,0};
-		String line = "";
-		int countRecord=0;
-		//Hashtable<String,String> table=new Hashtable<String,String>();
-		File file=new File("hash"+pageSize+"/hashtable"+hashIndex);
-		//FileInputStream fis=new FileInputStream(file);
-		//ObjectInputStream in=new ObjectInputStream(fis);
-		BufferedReader in=new BufferedReader(new FileReader(file));
-		while((line = in.readLine())!=null)
-		{ 
-			countRecord++;
-	      	String[] item = line.split(",");//split the csv file by tab
-	      	if(item[0].equals(queryKeyWord))
-	      	{
-	    		pageRecordNo[0]=Integer.valueOf(item[1]);
-	    		pageRecordNo[1]=Integer.valueOf(item[2]);
-	    		//System.out.println(pageRecordNo[0]+"    "+pageRecordNo[1]);
-	      	}
-		//table=(Hashtable<String, String>) in.readObject();
-		//pageNo=table.get(queryKeyWord);
+		ArrayList<hashIndex> pageRecordNo= new ArrayList<hashIndex>();
+		int countRecord=bucketSize;
+		
+		while(countRecord>=bucketSize)
+		{
+			String line = "";
+			countRecord=0;
+			//Hashtable<String,String> table=new Hashtable<String,String>();
+			File file=new File("hash"+pageSize+"/hashtable"+hashIndex);
+			//FileInputStream fis=new FileInputStream(file);
+			//ObjectInputStream in=new ObjectInputStream(fis);
+			BufferedReader in=new BufferedReader(new FileReader(file));
+			while((line = in.readLine())!=null)
+			{ 
+				countRecord++;  //count how many records in this hash table
+		      	String[] item = line.split(",");//split the csv file by tab
+		      	if(item[0].equals(queryKeyWord))
+		      	{
+		      		pageRecordNo.add(new hashIndex(item[0],Integer.valueOf(item[1]),Integer.valueOf(item[2])));
+		      		System.out.println(item[0]+" is found in hash table No:"+ hashIndex);
+		    		//System.out.println(pageRecordNo[0]+"    "+pageRecordNo[1]);
+		      	}
+			//table=(Hashtable<String, String>) in.readObject();
+			//pageNo=table.get(queryKeyWord);
+			}			
+			in.close();	
+			
+		//	if(pageRecordNo.size()==0 && countRecord<bucketSize)
+		//		System.out.println("Hash table No:"+ hashIndex +" has been viewed as not full and no found.");
+		//	else if (pageRecordNo.size()==0 && countRecord>=bucketSize)
+		//		System.out.println("Hash table No:"+ hashIndex +" has been viewed as full and no found. Search next hash table!");
+			if(countRecord>=bucketSize)
+				System.out.println("Hash table No:"+ hashIndex +" has been viewed as full. Search next hash table!");
+			else
+				System.out.println("Hash table No:"+ hashIndex +" has been viewed as not full. End the query.");
+			hashIndex++;
+			if(hashIndex==tableSize)
+				hashIndex=0; 
 		}
-		if(countRecord>=bucketSize)
-			pageRecordNo[2]=1;
-		in.close();
 		return pageRecordNo;
 	}
 	
@@ -245,6 +213,7 @@ public class hashquery {
 		byte[] page = new byte[pageSize];
 		try {
 			fileInputStream.skip(PageNo*pageSize);
+			System.out.println();
 			System.out.println("Heap File page No:"+PageNo+" is viewed!");
 			if(fileInputStream.read(page,pageIndex, pageSize)!=-1) //read new 4096 bytes content
 				return page;
@@ -254,16 +223,7 @@ public class hashquery {
 			return null;
 		}	
 	}
-	
-	public int getRecordNumber(byte[] pageContent)
-	{
-		byte[] pageSizeByte = new byte[4];		
-		System.arraycopy(pageContent,0,pageSizeByte,0,4);
-		int recordNumber=byteArrayToInt(pageSizeByte);
-		//System.out.println(recordNumber);
-		return recordNumber;
-	}
-	
+		
 	public byte[] getRecord(byte[] pageContent,int recordNo)
 	{
 		byte[] recordContet = null;

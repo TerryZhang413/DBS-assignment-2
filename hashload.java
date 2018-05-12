@@ -15,7 +15,7 @@ public class hashload {
 		int recordNumber;
 		final int recordsAmount=2024631;
 		int tableSize=1024 -1;
-		double rate=0.995;
+		double rate=0.996;
 		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
 		//int bucketSize=2050; // Amount of records*(1/0.7) /tableSize
 		//Hashtable<String, String> hashTable=new Hashtable<String,String>();
@@ -84,7 +84,7 @@ public class hashload {
 									hashIndex=0; //printed to the first hash table
 								}
 							}
-							hashTableList.get(hashIndex).addRecord(BN_NAME, hashIndex, recordNo); //put the BN_NAME and pageNo in the specific hashtable
+							hashTableList.get(hashIndex).addRecord(BN_NAME, pageCount, recordNo); //put the BN_NAME and pageNo in the specific hashtable
 							//hashTable.put(BN_NAME, ""+pageCount);
 						}
 					}
