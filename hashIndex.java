@@ -1,5 +1,3 @@
-package assignment2;
-
 public class hashIndex {
 
 	private String BN_NAME;

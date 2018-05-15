@@ -1,4 +1,4 @@
-package assignment2;
+
 
 import java.io.*;
 import java.util.ArrayList;
@@ -7,6 +7,8 @@ public class hashload {
 	
 	public static void main(String[] args) throws IOException {
 		
+		int notOverFlowCount=0;
+		int overflowCount=0;
 		hashload hashload=new hashload();
 		long startTime=System.currentTimeMillis();
 		long endTime;
@@ -15,7 +17,7 @@ public class hashload {
 		int recordNumber;
 		final int recordsAmount=2024631;
 		int tableSize=1024 -1;
-		double rate=0.996;
+		double rate=0.9995;
 		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
 		//int bucketSize=2050; // Amount of records*(1/0.7) /tableSize
 		//Hashtable<String, String> hashTable=new Hashtable<String,String>();
@@ -70,7 +72,10 @@ public class hashload {
 						
 						int recordNo=i; //store the locaton of the record in the specific page
 						if(hashTableList.get(hashIndex).getHashIndexList().size()<bucketSize)
+							{
 							hashTableList.get(hashIndex).addRecord(BN_NAME, pageCount, recordNo);
+							notOverFlowCount++;
+							}
 						else
 						{
 							while(hashTableList.get(hashIndex).getHashIndexList().size()>=bucketSize) //if the bucket is full
@@ -83,9 +88,10 @@ public class hashload {
 								{
 									hashIndex=0; //printed to the first hash table
 								}
+								
 							}
 							hashTableList.get(hashIndex).addRecord(BN_NAME, pageCount, recordNo); //put the BN_NAME and pageNo in the specific hashtable
-							//hashTable.put(BN_NAME, ""+pageCount);
+							overflowCount++;//hashTable.put(BN_NAME, ""+pageCount);
 						}
 					}
 					pageCount++;
@@ -128,8 +134,14 @@ public class hashload {
 				System.out.println("Hash table "+i+" has been built!");
 			}
 			out.close();
+			
+			System.out.println("Overflow records  number: "+overflowCount + " Bucket records number: "+notOverFlowCount);
+			System.out.println("Total amount of records is: "+(overflowCount+notOverFlowCount));
+			
 			endTime=System.currentTimeMillis();
 			System.out.println("Number of milliseconds is: "+ (endTime-startTime)+ "ms");
+			
+			
 		}
 		else
 		{
@@ -138,7 +150,7 @@ public class hashload {
 		
 	}
 
-
+	//read heap file
 	public FileInputStream readHeapfile(int pageSize)
 	{
 		FileInputStream fileInputStream=null;
@@ -152,7 +164,7 @@ public class hashload {
 			return fileInputStream;
 		}
 	
-	
+	//read next page and return byte[] for whole page content
 	public byte[] readNextPage(FileInputStream fileInputStream,int pageSize)
 	{
 		int pageIndex=0;
@@ -263,16 +275,4 @@ public class hashload {
 		return hashCode;
 	}
 	
-	
-	public int hashCode(String str,int tableSize)
-	{
-		char[] charArray=str.toCharArray();
-		int hash=(int)charArray[0];
-		for(int i=0;i<charArray.length-1;i++)
-		{
-			hash=hash*31+(int)charArray[i+1];
-			hash=hash%tableSize;
-		}			
-		return hash;
-	}
 }

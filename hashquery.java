@@ -1,4 +1,4 @@
-package assignment2;
+
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -25,7 +25,7 @@ public class hashquery {
 		
 		final int recordsAmount=2024631;
 		int tableSize=1024 -1;
-		double rate=0.9;
+		double rate=0.9995;
 		int bucketSize=(int) (( recordsAmount / rate ) / tableSize);
 		
 		
@@ -109,17 +109,15 @@ public class hashquery {
 		}
 
 	}
-
 	
-	
-	
+	// compute hash code
 	public int hashCodeRestrict(int hashCode,int tableSize)
 	{
 		hashCode=Math.abs(hashCode)%tableSize;
 		return hashCode;
 	}
 	
-	
+	// view hash file to get a arraylist containing all matched record's pageNo and recordNo
 	@SuppressWarnings("unchecked")
 	public ArrayList<hashIndex> getPageRecordNo(int pageSize,int hashIndex,String queryKeyWord, int bucketSize,int tableSize ) throws IOException, ClassNotFoundException
 	{
@@ -165,7 +163,7 @@ public class hashquery {
 		return pageRecordNo;
 	}
 	
-	
+	// print the records
 	public boolean printInfo(String queryKeyWord,int pageNumber,int recordNo,int pageSize)
 	{
 		boolean judgement=false;
@@ -181,7 +179,7 @@ public class hashquery {
 
 				//System.out.println("number:"+i);
 			byte[] record = null;
-			record=getRecord(pageContent,recordNo);
+			record=getRecord(pageContent,recordNo,pageSize);
 			//System.out.println("This BN_NAME is founded as "+getBN_NAME(recordList.get(i))); 
 			System.out.println("All information is below:");
 			System.out.println(getOtherInfo(record));
@@ -198,6 +196,7 @@ public class hashquery {
 		return judgement;
 	}
 	
+	//read specific page and return byte[] for whole page
 	public byte[] readSpecificPage(int pageSize,int PageNo)
 	{
 		int pageIndex=0;
@@ -224,20 +223,44 @@ public class hashquery {
 		}	
 	}
 		
-	public byte[] getRecord(byte[] pageContent,int recordNo)
+	//get the specific record
+	public byte[] getRecord(byte[] pageContent,int recordNo,int pageSize)
 	{
 		byte[] recordContet = null;
 		int recordLength;
+		byte[] recordNumberbyte = new byte[4];
 		byte[] startLocation = new byte[2];
 		byte[] endLocation = new byte[2];
 	    int startRecordLocation;
 	    int endRecordLocation = 0;
+	    int recordNumber;
 		
+	    System.arraycopy(pageContent,0,recordNumberbyte,0,4);
+	    recordNumber=byteArrayToInt(recordNumberbyte);
+	    /*	    System.out.println(byteArrayToInt(recordNumberbyte));
+	    for(int i=0;i<byteArrayToInt(recordNumber);i++)
+	    {
+		    System.arraycopy(pageContent,4+i*2,startLocation,0,2);
+			System.arraycopy(pageContent,4+(i+1)*2,endLocation,0,2);
+			startRecordLocation=byteArrayToShort(startLocation);
+			System.out.println("start: "+startRecordLocation);	
+			endRecordLocation=byteArrayToShort(endLocation);
+			System.out.println("end: "+endRecordLocation);
+	    }*/
+	    
 	    System.arraycopy(pageContent,4+recordNo*2,startLocation,0,2);
-		System.arraycopy(pageContent,4+(recordNo+1)*2,endLocation,0,2);
+	    if(recordNo!=recordNumber-1)   //judge if it is the last record in the page
+	    	{
+	    	System.arraycopy(pageContent,4+(recordNo+1)*2,endLocation,0,2);
+	    	endRecordLocation=byteArrayToShort(endLocation);
+	    	}
+	    else 
+	    	endRecordLocation=pageSize;
+	    
+	    
 		startRecordLocation=byteArrayToShort(startLocation);
 		//System.out.println(startRecordLocation);	
-		endRecordLocation=byteArrayToShort(endLocation);
+		
 		//System.out.println(endRecordLocation);
 		recordLength=endRecordLocation-startRecordLocation;
 		recordContet=new byte[recordLength];
@@ -246,75 +269,8 @@ public class hashquery {
 		
 		return recordContet;
 	}
-	
-	
-	//get records in a page
-	public ArrayList<byte[]> getRecord(int recordNumber,byte[] pageContent)
-	{
-		ArrayList<byte[]> recordList = new ArrayList<byte[]>();
 		
-		int recordLength;
-		byte[] startLocation = new byte[2];
-		byte[] endLocation = new byte[2];
-	    int startRecordLocation;
-	    int endRecordLocation = 0;
-	    
-		//get record by using index
-		for(int i=0;i<recordNumber-1;i++)  
-		{
-			//System.out.println(i+" :");
-			System.arraycopy(pageContent,4+i*2,startLocation,0,2);
-			System.arraycopy(pageContent,4+(i+1)*2,endLocation,0,2);
-			startRecordLocation=byteArrayToShort(startLocation);
-			//System.out.println(startRecordLocation);			
-			endRecordLocation=byteArrayToShort(endLocation);
-			//System.out.println(endRecordLocation);
-			recordLength=endRecordLocation-startRecordLocation;
-			byte[] record = new byte[recordLength];
-			System.arraycopy(pageContent,startRecordLocation,record,0,recordLength);
-			recordList.add(record);
-		}
-		
-		byte[] record = new byte[4096-endRecordLocation];
-		System.arraycopy(pageContent,endRecordLocation,record,0,4096-endRecordLocation);   //get last record
-		recordList.add(record);
-		
-		return recordList;
-	}
-	
-	public String getBN_NAME(byte[] record)
-	{
-		int startFieldLocation;
-		int endFieldLocation;
-		int fieldLength;
-		byte[] startLocation = new byte[2];
-		byte[] endLocation = new byte[2];
-		
-		for(int i=0;i<9;i++)
-		{
-			System.arraycopy(record,2*i,startLocation,0,2);
-			startFieldLocation=byteArrayToShort(startLocation);
-			//System.out.println(startFieldLocation);
-		}
-		
-	
-		System.arraycopy(record,2,startLocation,0,2);
-		startFieldLocation=byteArrayToShort(startLocation);
-		//System.out.println(startFieldLocation);
-		
-		System.arraycopy(record,4,endLocation,0,2);
-		endFieldLocation=byteArrayToShort(endLocation);
-		//System.out.println(endFieldLocation);
-		
-		fieldLength=endFieldLocation-startFieldLocation;
-		//System.out.println(fieldLength);
-		byte[] field = new byte[fieldLength];
-		System.arraycopy(record,startFieldLocation,field,0,fieldLength);
-		String fieldContent=new String(field);
-		//System.out.println(fieldContent);
-		return fieldContent;
-	}
-	
+	//get other info in the record
 	public String getOtherInfo(byte[] record)
 	{
 		int startFieldLocation=18;
@@ -365,7 +321,6 @@ public class hashquery {
 		return   b[1] & 0xFF |   
 		            (b[0] & 0xFF) << 8; 
 		} 
-	
 	
 	
 	//convert byte[] to long
